@@ -6,10 +6,14 @@ import bpy
 from bpy.types import Operator, USERPREF_PT_addons, AddonPreferences
 from bpy.props import StringProperty, BoolProperty
 
+def parent(name):
+    parent_name = '.'.join(name.split('.')[:-1])
+    return parent_name
+
 class EditAddonSourcePreferences(AddonPreferences):
     # this must match the addon name, use '__package__'
     # when defining this in a submodule of a python package.
-    bl_idname = __package__
+    bl_idname = parent(__name__)
 
     use_external : BoolProperty(
             name="Use External Editor",
@@ -59,7 +63,7 @@ class WM_OT_addon_edit(Operator):
         import subprocess, os
 
         user_preferences = context.preferences
-        addon_prefs = user_preferences.addons[__name__].preferences
+        addon_prefs = user_preferences.addons[EditAddonSourcePreferences.bl_idname].preferences
         text_editor = addon_prefs.external_editor #context.user_preferences.filepaths.text_editor
         use_external = addon_prefs.use_external
 
