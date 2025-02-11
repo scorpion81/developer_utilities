@@ -10,3 +10,12 @@ blender_version_min = "4.3.0"
 license = ["SPDX:GPL-3.0-or-later"]
 website = "https://github.com/scorpion81/developer_utilities"
 copyright = ["2024 scorpion81"]
+
+[build]
+paths_exclude_pattern = [
+  "__pycache__/",
+  ".*",
+  "*.zip",
+  "*.png",
+  "*.md",
+]
