@@ -9,7 +9,7 @@ from bpy.props import StringProperty, BoolProperty
 class EditAddonSourcePreferences(AddonPreferences):
     # this must match the addon name, use '__package__'
     # when defining this in a submodule of a python package.
-    bl_idname = __name__
+    bl_idname = __package__
 
     use_external : BoolProperty(
             name="Use External Editor",
