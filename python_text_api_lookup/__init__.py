@@ -6,7 +6,7 @@ import bpy
 
 class UtilityPanel(bpy.types.Panel):
     """Utility Panel in the Text Editor ui region"""
-    bl_label = "Utilities"
+    bl_label = "Text API Lookup"
     bl_idname = "TEXT_PT_utility"
     bl_space_type = 'TEXT_EDITOR'
     bl_region_type = 'UI'
