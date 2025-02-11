@@ -15,12 +15,12 @@ class UtilityPanel(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        layout.operator("text.api_lookup", text="Find Text in Python API")
+        layout.operator("text.python_api_lookup", text="Find Text in Python API")
         layout.operator("screen.userpref_show")
 
 class APILookupOperator(bpy.types.Operator):
     """Tooltip"""
-    bl_idname = "text.api_lookup"
+    bl_idname = "text.python_api_lookup"
     bl_label = "API Lookup Operator"
     
     def selected_text(self, context):
@@ -29,6 +29,9 @@ class APILookupOperator(bpy.types.Operator):
         #from current_character till select_end_character
         #concat
         text = context.edit_text
+        if text is None:
+            return None
+        
         body = ''
         cs = text.current_character
         ce = text.select_end_character
@@ -63,6 +66,10 @@ class APILookupOperator(bpy.types.Operator):
     def execute(self, context):
       
         text = self.selected_text(context)
+        if text is None:
+            self.report("ERROR", "Please open or create a text in the text editor first")
+            return {'CANCELLED'}
+
         #print(text)
         
         #open browser (2.8+ ?)
