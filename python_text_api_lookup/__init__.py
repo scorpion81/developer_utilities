@@ -67,7 +67,7 @@ class APILookupOperator(bpy.types.Operator):
       
         text = self.selected_text(context)
         if text is None:
-            self.report("ERROR", "Please open or create a text in the text editor first")
+            self.report({"ERROR"}, "Please open or create a text in the text editor first")
             return {'CANCELLED'}
 
         #print(text)
