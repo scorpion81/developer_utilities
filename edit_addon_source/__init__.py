@@ -4,7 +4,8 @@
 
 import bpy
 from bpy.types import Operator, USERPREF_PT_addons, AddonPreferences
-from bpy.props import StringProperty, BoolProperty
+from bpy.props import StringProperty, BoolProperty, IntProperty
+from ..document_addon import pid
 
 def parent(name):
     parent_name = '.'.join(name.split('.')[:-1])
@@ -24,11 +25,37 @@ class EditAddonSourcePreferences(AddonPreferences):
             name="External Editor",
             subtype='FILE_PATH',
             )
+    
+    target_dir : StringProperty(
+            name="Target Directory for generated Documentation",
+            subtype='DIR_PATH',
+            )
+    
+    use_server : BoolProperty(
+            name="Start HTTP Server for viewing generated docs",
+            default=False,
+            )
+    
+    server_port : IntProperty(
+            name="Server Port",
+            default=8000,
+            min = 0,
+            max = 65535,
+            )
 
     def draw(self, context):
         layout = self.layout
-        layout.prop(self, "use_external")
-        layout.prop(self, "external_editor")                     
+        box = layout.box()
+        box.label(text="Edit Addon Options")
+        box.prop(self, "use_external")
+        box.prop(self, "external_editor")
+        box = layout.box()
+        box.label(text="Generate Documentation Options")
+        box.prop(self, "target_dir")
+        row = box.row()
+        row.prop(self, "use_server")
+        row.prop(self, "server_port")
+
 
 def draw(**kwargs):
     
@@ -44,10 +71,22 @@ def draw(**kwargs):
     split = layout.split(factor=0.15)
     col_a = split.column()
     col_b = split.split(factor=0.5)
+    col_c = col_b.column()
     col_a.alignment = 'RIGHT'
 
     col_a.label(text="Development")
     col_b.operator("wm.addon_edit_sources", text="Edit Addon Sources", icon='TEXT').module = mod.__name__
+    addon_prefs = kwargs['context'].user_preferences.addons[EditAddonSourcePreferences.bl_idname].preferences
+    if pid == -1:
+        op = col_c.operator("pdoc.generate", text="Generate Documentation")
+        op.module_name = mod.__name__
+        op.server = addon_prefs.use_server
+        op.port = addon_prefs.server_port
+        op.target = addon_prefs.target_dir
+    else:
+        op = col_c.operator("pdoc.kill", text="Stop running server")
+        op.pid = pid
+
 
 class WM_OT_addon_edit(Operator):
     "Edit the addon source files"
