@@ -35,7 +35,8 @@ def draw(**kwargs):
     except ImportError as e:
         col_c.operator("pdoc.install",text="Install missing pdoc dependency")
         return 
-
+    
+    global pid
     if pid == -1:
         op = col_c.operator("pdoc.generate", text="Generate Documentation")
         op.module_name = mod.__name__
