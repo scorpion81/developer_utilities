@@ -48,10 +48,16 @@ def generate(**kwargs):
         document(m, path)
 
     if kwargs['server']:
-        exe = sys.executable
-        port = kwargs['port']
-        cmd = f"{exe} -m http.server -d{path} {port}"
-        pid = run(cmd).pid
+        global pid
+        
+        try: 
+            exe = sys.executable
+            port = kwargs['port']
+            cmd = f"{exe} -m http.server -d{path} {port}"
+            pid = run(cmd).pid
+        except OSError as e:
+            print(e)
+
         url = f"http://localhost:{port}"
         bpy.ops.wm.url_open(url=url)
 
@@ -75,8 +81,10 @@ class KillServerOperator(bpy.types.Operator):
     pid : bpy.props.IntProperty(name="pid")
     def execute(self, context):
         import signal, os
+        global pid
         if self.pid > -1:
             os.kill(self.pid, signal.SIGTERM)
+            pid = -1
             return {"FINISHED"}
         return {"CANCELLED"}
 
