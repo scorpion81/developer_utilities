@@ -51,13 +51,23 @@ def generate(**kwargs):
         exe = sys.executable
         port = kwargs['port']
         cmd = f"{exe} -m http.server -d{path} {port}"
-        pid = run(cmd)
+        pid = run(cmd).pid
         url = f"http://localhost:{port}"
         bpy.ops.wm.url_open(url=url)
 
     return path
 
-
+class PdocInstallOperator(bpy.types.Operator):
+    """Install pdoc, if necessary"""
+    bl_idname = "pdoc.install"
+    bl_label = "Install pdoc"
+    def execute(self, context):
+        import sys
+        exe = sys.executable
+        cmd = f"{exe} -pip install pdoc"
+        run(cmd)
+        return {"FINISHED"}
+        
 class KillServerOperator(bpy.types.Operator):
     """Kill the server process if one was started previously"""
     bl_idname = "pdoc.kill"
@@ -91,7 +101,9 @@ class DocumentationOperator(bpy.types.Operator):
 def register():
     bpy.utils.register_class(DocumentationOperator)
     bpy.utils.register_class(KillServerOperator)
+    bpy.utils.register_class(PdocInstallOperator)
 
 def unregister():
     bpy.utils.unregister_class(KillServerOperator)
     bpy.utils.unregister_class(DocumentationOperator)
+    bpy.utils.unregister_class(PdocInstallOperator)

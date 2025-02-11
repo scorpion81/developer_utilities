@@ -26,7 +26,15 @@ def draw(**kwargs):
 
     col_a.label(text="Development")
     col_b.operator("wm.addon_edit_sources", text="Edit Addon Sources", icon='TEXT').module = mod.__name__
+
     addon_prefs = kwargs['context'].user_preferences.addons[EditAddonSourcePreferences.bl_idname].preferences
+    
+    try:
+        import pdoc
+    except ImportError as e:
+        col_c.operator("pdoc.install",text="Install missing pdoc dependency")
+        return 
+
     if pid == -1:
         op = col_c.operator("pdoc.generate", text="Generate Documentation")
         op.module_name = mod.__name__
