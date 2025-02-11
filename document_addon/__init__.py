@@ -7,13 +7,16 @@ def run(cmd):
     return subprocess.Popen(shlex.split(cmd))
 
 def document(m, path):
-    import pdoc, os
-    
-    doc = pdoc.doc.Module(m)
-    out = pdoc.render.html_module(module=doc, all_modules={m.__name__: doc})
-    rel_path = os.path.join(path, f"{m.__name__}.html")
-    with open(rel_path, "w") as f:
-        f.write(out)
+    try: 
+        import pdoc, os
+        
+        doc = pdoc.doc.Module(m)
+        out = pdoc.render.html_module(module=doc, all_modules={m.__name__: doc})
+        rel_path = os.path.join(path, f"{m.__name__}.html")
+        with open(rel_path, "w") as f:
+            f.write(out)
+    except Exception as e:
+        bpy.ops.pdoc.install()
 
 def list_submodules(package):
     
@@ -70,7 +73,7 @@ class PdocInstallOperator(bpy.types.Operator):
     def execute(self, context):
         import sys
         exe = sys.executable
-        cmd = f"{exe} -pip install pdoc"
+        cmd = f"{exe} -m pip install pdoc"
         run(cmd)
         return {"FINISHED"}
         
