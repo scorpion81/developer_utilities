@@ -43,7 +43,7 @@ def draw(**kwargs):
     #just append the new operator here
     split = layout.split(factor=0.15)
     col_a = split.column()
-    col_b = split.column()
+    col_b = split.split(factor=0.5)
     col_a.alignment = 'RIGHT'
 
     col_a.label(text="Development")
