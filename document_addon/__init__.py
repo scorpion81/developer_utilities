@@ -4,14 +4,14 @@ pid = -1
 
 def run(cmd):
     import subprocess, shlex
-    return subprocess.Popen(shlex.split(cmd), check=True)
+    return subprocess.Popen(shlex.split(cmd))
 
 def document(m, path):
     import pdoc, os
     
     doc = pdoc.doc.Module(m)
     out = pdoc.render.html_module(module=doc, all_modules={m.__name__: doc})
-    rel_path = os.path.join(path, 'docs', f"{m.__name__}.html")
+    rel_path = os.path.join(path, f"{m.__name__}.html")
     with open(rel_path, "w") as f:
         f.write(out)
 
