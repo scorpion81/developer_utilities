@@ -27,12 +27,12 @@ class EditAddonSourcePreferences(AddonPreferences):
             )
     
     target_dir : StringProperty(
-            name="Target Directory for generated Documentation",
+            name="Target Directory",
             subtype='DIR_PATH',
             )
     
     use_server : BoolProperty(
-            name="Start HTTP Server for viewing generated docs",
+            name="Start HTTP Server",
             default=False,
             )
     
@@ -70,15 +70,16 @@ def draw(**kwargs):
     #just append the new operator here
     split = layout.split(factor=0.15)
     col_a = split.column()
-    col_b = split.split(factor=0.5)
-    col_c = col_b.column()
+    split = split.split(factor=0.5)
+    col_b = split.column()
+    col_c = split.column()
     col_a.alignment = 'RIGHT'
 
     col_a.label(text="Development")
     col_b.operator("wm.addon_edit_sources", text="Edit Addon Sources", icon='TEXT').module = mod.__name__
 
-    addon_prefs = kwargs['context'].user_preferences.addons[EditAddonSourcePreferences.bl_idname].preferences
-    
+    addon_prefs = bpy.context.preferences.addons[EditAddonSourcePreferences.bl_idname].preferences
+
     try:
         import pdoc
     except ImportError as e:
