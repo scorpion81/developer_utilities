@@ -6,6 +6,19 @@ def run(cmd):
     import subprocess, shlex
     return subprocess.Popen(shlex.split(cmd))
 
+def document2(m, path):
+    import pdoc, pathlib, os
+    path = pathlib.Path(path)
+    out = pdoc.pdoc(m.__name__, path)
+    split = m.__name__.split(".")
+    fname = split[-1:][0]
+    pname = split[:-1]
+    rel_path = path.joinpath(*pname)
+    os.makedirs(rel_path, exist_ok=True)
+    rel_path = rel_path.joinpath(f"{fname}.html")
+    with open(rel_path, "w") as f:
+        f.write(out)
+
 def document(m, path):
     try: 
         import pdoc, os
@@ -38,17 +51,20 @@ def generate(**kwargs):
    
     mod = importlib.import_module(kwargs['module_name'])
     modules = list_submodules(mod)
+
     if kwargs['target_dir'] == "":
         script_dir = os.path.dirname(inspect.getfile(mod))
         path = os.path.join(script_dir, "docs")
         os.makedirs(path, exist_ok=True)
     else:
-        path = os.path.join(kwargs['target_dir'], kwargs['module_name'])
-        os.makedirs(path, exist_ok=True)
-    
-    document(mod, path)
-    for m in modules:
-        document(m, path)
+        path = kwargs['target_dir']
+
+    try:
+        document2(mod, path)
+        for m in modules:
+            document2(m, path)
+    except Exception as e:
+        print(e)
 
     if kwargs['server']:
         global pid
