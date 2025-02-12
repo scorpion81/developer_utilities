@@ -3,32 +3,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import bpy
-from bpy.types import Operator, USERPREF_PT_addons, AddonPreferences
+from bpy.types import Operator
 from bpy.props import StringProperty, BoolProperty
+from .. import DeveloperUtilitiesPreferences
 
-def parent(name):
-    parent_name = '.'.join(name.split('.')[:-1])
-    return parent_name
-
-class EditAddonSourcePreferences(AddonPreferences):
-    # this must match the addon name, use '__package__'
-    # when defining this in a submodule of a python package.
-    bl_idname = parent(__name__)
-
-    use_external : BoolProperty(
-            name="Use External Editor",
-            default=False,
-            )
-            
-    external_editor : StringProperty(
-            name="External Editor",
-            subtype='FILE_PATH',
-            )
-
-    def draw(self, context):
-        layout = self.layout
-        layout.prop(self, "use_external")
-        layout.prop(self, "external_editor")                     
 
 def draw(**kwargs):
     
@@ -63,8 +41,8 @@ class WM_OT_addon_edit(Operator):
         import subprocess, os
 
         user_preferences = context.preferences
-        addon_prefs = user_preferences.addons[EditAddonSourcePreferences.bl_idname].preferences
-        text_editor = addon_prefs.external_editor #context.user_preferences.filepaths.text_editor
+        addon_prefs = user_preferences.addons[DeveloperUtilitiesPreferences.bl_idname].preferences
+        text_editor = user_preferences.filepaths.text_editor
         use_external = addon_prefs.use_external
 
         if not text_editor or not use_external:
@@ -85,7 +63,7 @@ class WM_OT_addon_edit(Operator):
                 traceback.print_exc()
                 self.report({'ERROR'},
                             "Text editor not found, "
-                            "please specify in Addon Preferences > External Editor")
+                            "please specify in Preferences > Filepaths > Applications > Text Editor")
                 return {'CANCELLED'}
 
             return {'FINISHED'}
@@ -106,7 +84,6 @@ class WM_OT_addon_edit(Operator):
         return None, False
 
     def execute(self, context):
-        import addon_utils
         import os
 
         path, isdir = WM_OT_addon_edit.path_from_addon(self.module)
@@ -129,7 +106,6 @@ class WM_OT_addon_edit(Operator):
 
 
 def register():
-    bpy.utils.register_class(EditAddonSourcePreferences)
     bpy.utils.register_class(WM_OT_addon_edit)
     import bl_pkg.bl_extension_ui as ui
     
@@ -147,8 +123,3 @@ def unregister():
     bl_pkg.bl_extension_ui.addon_draw_item_expanded = olddraw
 
     bpy.utils.unregister_class(WM_OT_addon_edit)
-    bpy.utils.unregister_class(EditAddonSourcePreferences)
-
-
-if __name__ == "__main__":
-    register()
