@@ -191,10 +191,8 @@ class TEXT_OT_EditOperator(Operator):
     def show_calls(self, context):
         import bl_ui
         import addon_utils
-        import sys
-
+        
         exclude = []
-        exclude.extend(sys.stdlib_module_names)
         exclude.append("bpy")
         exclude.append("sys")
 
@@ -202,11 +200,9 @@ class TEXT_OT_EditOperator(Operator):
         walk_module(self.op, bl_ui, calls, exclude)
 
         for m in addon_utils.modules():
-            try:
-                mod = sys.modules[m.__name__]
-                walk_module(self.op, mod, calls, exclude)
-            except KeyError:
-                continue
+            import importlib
+            mod = importlib.import_module(m)
+            walk_module(self.op, mod, calls, exclude)
 
         for c in calls:
             cl = context.scene.calls.add()
