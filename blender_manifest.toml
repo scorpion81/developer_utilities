@@ -12,7 +12,7 @@ website = "https://github.com/scorpion81/developer_utilities"
 copyright = ["2024 scorpion81"]
 
 [permissions]
-files = "Open source files of addons in order to be loaded in external or internal editor"
+files = "Open source files of addons for editing"
 
 [build]
 paths_exclude_pattern = [
