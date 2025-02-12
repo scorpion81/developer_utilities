@@ -4,8 +4,7 @@
 
 import bpy
 from bpy.types import Operator
-from bpy.props import StringProperty, BoolProperty
-from .. import DeveloperUtilitiesPreferences
+from bpy.props import StringProperty
 
 
 def draw(**kwargs):
@@ -39,6 +38,7 @@ class WM_OT_addon_edit(Operator):
 
     def load_sources(self, context, filepaths):
         import subprocess, os
+        from .. import DeveloperUtilitiesPreferences
 
         user_preferences = context.preferences
         addon_prefs = user_preferences.addons[DeveloperUtilitiesPreferences.bl_idname].preferences

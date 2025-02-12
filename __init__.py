@@ -2,6 +2,7 @@ from . import edit_operator_source
 from . import edit_addon_source
 from . import python_text_api_lookup
 import bpy 
+from bpy.props import BoolProperty
 from bpy.types import AddonPreferences
 
 
