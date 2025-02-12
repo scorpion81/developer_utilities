@@ -18,4 +18,6 @@ paths_exclude_pattern = [
   "*.zip",
   "*.png",
   "*.md",
+  "testmod/*",
+  "make.py",
 ]
