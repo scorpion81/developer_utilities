@@ -1,35 +1,15 @@
 import bpy
+import pdoc.render
 
 pid = -1
 
 def run(cmd):
     import subprocess, shlex
+    subprocess.run(shlex.split(cmd), check=True)
+
+def start(cmd):
+    import subprocess, shlex
     return subprocess.Popen(shlex.split(cmd))
-
-def document2(m, path):
-    import pdoc, pathlib, os
-    path = pathlib.Path(path)
-    out = pdoc.pdoc(m.__name__, path)
-    split = m.__name__.split(".")
-    fname = split[-1:][0]
-    pname = split[:-1]
-    rel_path = path.joinpath(*pname)
-    os.makedirs(rel_path, exist_ok=True)
-    rel_path = rel_path.joinpath(f"{fname}.html")
-    with open(rel_path, "w") as f:
-        f.write(out)
-
-def document(m, path):
-    try: 
-        import pdoc, os
-        
-        doc = pdoc.doc.Module(m)
-        out = pdoc.render.html_module(module=doc, all_modules={m.__name__: doc})
-        rel_path = os.path.join(path, f"{m.__name__}.html")
-        with open(rel_path, "w") as f:
-            f.write(out)
-    except Exception as e:
-        bpy.ops.pdoc.install()
 
 def list_submodules(package):
     
@@ -47,24 +27,29 @@ def generate(**kwargs):
     import importlib
     import os
     import inspect
-    import sys
-   
-    mod = importlib.import_module(kwargs['module_name'])
-    modules = list_submodules(mod)
+    import pdoc
+    import pathlib
 
     if kwargs['target_dir'] == "":
+        mod = importlib.import_module(kwargs['module_name'])
         script_dir = os.path.dirname(inspect.getfile(mod))
         path = os.path.join(script_dir, "docs")
         os.makedirs(path, exist_ok=True)
+        path = pathlib.Path(path)
     else:
         path = kwargs['target_dir']
+        path = pathlib.Path(path)
+        #path = path.joinpath(kwargs["module_name"])
 
-    try:
-        document2(mod, path)
-        for m in modules:
-            document2(m, path)
-    except Exception as e:
-        print(e)
+    pdoc.pdoc(kwargs['module_name'], output_directory=path)
+
+    return path
+
+    
+def generate_and_run(**kwargs):
+    
+    import sys
+    path = generate(**kwargs)
 
     if kwargs['server']:
         global pid
@@ -73,11 +58,11 @@ def generate(**kwargs):
             exe = sys.executable
             port = kwargs['port']
             cmd = f"{exe} -m http.server -d{path} {port}"
-            pid = run(cmd).pid
+            pid = start(cmd).pid
         except OSError as e:
             print(e)
 
-        url = f"http://localhost:{port}"
+        url = f"http://localhost:{port}/index.html"
         bpy.ops.wm.url_open(url=url)
 
     return path
@@ -118,7 +103,7 @@ class DocumentationOperator(bpy.types.Operator):
 
     def execute(self, context):
         if self.module_name != "":
-            generate(module_name=self.module_name, target_dir=self.target, server=self.server, port=self.port)
+            generate_and_run(module_name=self.module_name, target_dir=self.target, server=self.server, port=self.port)
             self.report({'INFO'}, "Documentation generated")
             return {'FINISHED'}
         self.report({'ERROR'}, "Please specify a module name")
