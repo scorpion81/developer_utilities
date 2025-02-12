@@ -1,7 +1,7 @@
 schema_version = "1.0.0"
 id = "developer_utilities"
 name = "Developer Utilities"
-version = "1.0.0"
+version = "1.0.1"
 tagline = "Make life of addon developers easier"
 maintainer = "scorpion81"
 type = "add-on"
@@ -10,6 +10,9 @@ blender_version_min = "4.3.0"
 license = ["SPDX:GPL-3.0-or-later"]
 website = "https://github.com/scorpion81/developer_utilities"
 copyright = ["2024 scorpion81"]
+
+[permissions]
+files = "Open source files of addons in order to be loaded in external or internal editor"
 
 [build]
 paths_exclude_pattern = [
