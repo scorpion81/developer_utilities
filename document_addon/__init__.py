@@ -44,9 +44,10 @@ def generate(**kwargs):
 
     
 def generate_and_run(**kwargs):
-    from .. import pid
 
     import sys
+    from .. import Pid
+    
     path = generate(**kwargs)
 
     if kwargs['server']:
@@ -55,7 +56,7 @@ def generate_and_run(**kwargs):
             exe = sys.executable
             port = kwargs['port']
             cmd = f"{exe} -m http.server -d{path} {port}"
-            pid = start(cmd).pid
+            Pid.pid = start(cmd).pid
         except OSError as e:
             print(e)
 
