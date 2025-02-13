@@ -8,8 +8,6 @@ import inspect
 from bpy.types import (
         Operator,
         Panel,
-        Header,
-        Menu,
         PropertyGroup
         )
 from bpy.props import (
@@ -18,47 +16,124 @@ from bpy.props import (
         IntProperty
         )
 
-def make_loc(prefix, c):
-    space = getattr(c, "bl_space_type", "")
-    region = getattr(c, "bl_region_type", "")
-    label = getattr(c, "bl_label", "")
-    return f"{prefix}: {space} {region} {label}"
+def list_submodules(package):
+    
+    import pkgutil, importlib
+    
+    """List all submodules of a given package without importing them."""
+    submodules = []
+    path = package.__path__
+    prefix = package.__name__ + '.'
 
-def walk_module(opname, mod, calls=[], exclude=[], visited=None):
+    for _, name, is_pkg in pkgutil.iter_modules(path, prefix):
+        submodules.append(importlib.import_module(name))
+        if is_pkg:
+            submodules.extend(list_submodules(importlib.import_module(name)))
+    return submodules
+
+def parent(i):
+    import ast
+    while hasattr(i, "parent"):
+        if i.parent is None:
+            break
+        if isinstance(i, ast.ClassDef):
+            break
+        i = i.parent
+    if hasattr(i, "name"):
+        return i.name
+    else:
+        return None
+
+def check_for_calls(a, opname, filepath):
+    #opname is "text.edit_operator"
+    #can be found as is as first arg
+    #or as call with
+    import ast
+
+    calls = []
+    w = list(ast.walk(a))
+    for i in w:
+        for child in ast.iter_child_nodes(i):
+            child.parent = i
+            #print(node)
+
+    for i in w:
+        if isinstance(i, ast.Call):
+            if isinstance(i.func, ast.Attribute):
+                #print("ATTR CALL",ast.unparse(i), ast.unparse(i.func.value), i.func.attr)
+                cls = ast.unparse(i.func.value)
+                nm = i.func.attr
+                #print(cls, nm, opname)
+                if opname == f"{cls}.{nm}".replace("bpy.ops.",""):
+                    p = parent(i)
+                    if p is not None:
+                        print("FOUND", parent(i), filepath, i.lineno, i.col_offset)
+                        call = [opname, parent(i), filepath, i.lineno, i.col_offset]
+                        calls.append(call)
+                
+                if i.func.attr == "operator":
+                    if len(i.args) > 0:
+                        if hasattr(i.args[0], "value"):
+                            val = i.args[0].value
+                            if isinstance(i.args[0].value, ast.Name):
+                                val = ast.unparse(i.args[0].value)  
+                            #print(val, opname, type(val), type(opname), opname == val)  
+                            if opname == val:
+                                p = parent(i)
+                                if p is not None:
+                                    print("FOUND", p, filepath, i.lineno, i.col_offset)
+                                    call = [opname, p , filepath, i.lineno, i.col_offset]
+                                    calls.append(call)
+                        
+            #if isinstance(i.func, ast.Name):
+            #    print("NAME CALL",i.func.id)
+    return calls
+
+def find_calls(module, method_name):
+    import ast
+    calls = []
+    #submodules = walk_module(module,exclude=["sys"],visited=None)
+    submodules = list_submodules(module)
+    #print(submodules)
+    try: 
+        tree = ast.parse(inspect.getsource(module))
+        filepath = inspect.getfile(module)
+        calls.extend(check_for_calls(tree, method_name, filepath))
+    except Exception as e:
+        pass
+
+    for submod in submodules:
+        try: 
+            tree = ast.parse(inspect.getsource(submod))
+            filepath = inspect.getfile(submod)
+            calls.extend(check_for_calls(tree, method_name, filepath))
+        except Exception as e:
+            print(e)
+
+    return calls
+
+def walk_module(module, exclude=[], visited=None):
     if visited is None:
         visited = set()
         
-    if mod in visited:
-        return
-    visited.add(mod)
-
-    for name, m in inspect.getmembers(mod):
+    if module in visited:
+        return []
+    
+    visited.add(module)
+    
+    submodules = []
+    for name, m in inspect.getmembers(module):
         if inspect.ismodule(m):
-            if m.__name__ not in exclude:
-                walk_module(opname, m, calls, exclude, visited)
-        elif inspect.isclass(m):
-            if (issubclass(m, Panel) or \
-                issubclass(m, Header) or \
-                issubclass(m, Menu)) and mod.__name__ != "bl_ui":
-                if hasattr(m, "draw"):
-                    loc = ""
-                    file = ""
-                    line = -1
-                    src, n = inspect.getsourcelines(m.draw)
-                    for i, s in enumerate(src):
-                        if opname in s:
-                            file = mod.__file__
-                            line = n + i
-
-                            if issubclass(m, Panel) and name != "Panel":
-                                loc = make_loc("Panel", m)
-                                calls.append([opname, loc, file, line])
-                            if issubclass(m, Header) and name != "Header":
-                                loc = make_loc("Header", m)
-                                calls.append([opname, loc, file, line])
-                            if issubclass(m, Menu) and name != "Menu":
-                                loc = make_loc("Menu", m)
-                                calls.append([opname, loc, file, line])
+            found = False
+            for x in exclude:
+                if m.__name__.startswith(x):
+                    found = True
+                    break
+            if found:
+                continue
+            submodules.append(m)
+            submodules.extend(walk_module(m, exclude=exclude, visited=visited))
+    return submodules
 
 
 def getclazz(opname):
@@ -141,6 +216,11 @@ class OperatorEntry(PropertyGroup):
             description="",
             default=-1
             )
+    offset : IntProperty(
+            name="Offset",
+            description="",
+            default=-1
+            )
 
 class TEXT_OT_EditOperator(Operator):
     bl_idname = "text.edit_operator"
@@ -167,8 +247,14 @@ class TEXT_OT_EditOperator(Operator):
             description="",
             default=-1
             )
+    
+    column : IntProperty(
+            name="Line",
+            description="",
+            default=-1
+            )
 
-    def show_text(self, context, path, line):
+    def show_text(self, context, path, line, column):
         found = False
 
         for t in bpy.data.texts:
@@ -179,6 +265,7 @@ class TEXT_OT_EditOperator(Operator):
                 ctx['edit_text'] = t
                 with context.temp_override(**ctx):
                     bpy.ops.text.jump(line=line)
+                    #bpy.ops.text.jump_to_file_at_point(filepath='', line=line, column=column)
                 found = True
                 break
 
@@ -186,53 +273,65 @@ class TEXT_OT_EditOperator(Operator):
             self.report({'INFO'},
                         "Opened file: " + path)
             bpy.ops.text.open(filepath=path)
+            #bpy.ops.text.jump_to_file_at_point(filepath='', line=line, column=column)
             bpy.ops.text.jump(line=line)
 
     def show_calls(self, context):
-        import bl_ui
-        import addon_utils
+        import bl_ui, bl_ext
+        import os
         
         exclude = []
-        exclude.append("bpy")
+
+        #avoid builtin classes, they dont have sources or files at hand
+        #exclude.append("bpy")
+        #exclude.append("bpy.ops")
+        #exclude.append("bpy.types")
         exclude.append("sys")
+        #exclude.append("bl_ui")
 
         calls = []
-        walk_module(self.op, bl_ui, calls, exclude)
+        calls.extend(find_calls(bl_ui, self.op))
+        d = dir(bl_ext)
+        for x in d:
+            if not x.startswith("__"):
+                mod = getattr(bl_ext, x)
+                calls.extend(find_calls(mod, self.op))
 
-        for m in addon_utils.modules():
-            import importlib
-            mod = importlib.import_module(m)
-            walk_module(self.op, mod, calls, exclude)
-
+        #print("CALLS", calls)
         for c in calls:
             cl = context.scene.calls.add()
             cl.name = c[0]
-            cl.label = c[1]
+            cl.label = f"{c[1]} : {os.path.basename(c[2])}:{c[3]}"
             cl.path = c[2]
             cl.line = c[3]
+            cl.column = c[4]
+            #print("CALL", cl)
 
     def invoke(self, context, event):
         context.window_manager.invoke_search_popup(self)
         return {'PASS_THROUGH'}
 
     def execute(self, context):
+        import os
+
         if self.path != "" and self.line != -1:
             #invocation of one of the "found" locations
-            self.show_text(context, self.path, self.line)
+            self.show_text(context, self.path, self.line, self.column)
             return {'FINISHED'}
         else:
             context.scene.calls.clear()
             path, line, addon = getmodule(self.op)
 
             if addon:
-                self.show_text(context, path, line)
+                #self.show_text(context, path, line, -1)
 
                 #add convenient "source" button, to toggle back from calls to source
                 c = context.scene.calls.add()
                 c.name = self.op
-                c.label = "Source"
+                c.label = f"Source : {os.path.basename(path)}:{line}"
                 c.path = path
                 c.line = line
+                c.column = -1
 
                 self.show_calls(context)
                 context.area.tag_redraw()
@@ -290,3 +389,4 @@ def unregister():
 
 if __name__ == "__main__":
     register()
+    bpy.ops.text.edit_operator()
