@@ -3,7 +3,7 @@ from . import edit_addon_source
 from . import python_text_api_lookup
 from . import document_addon
 import bpy 
-from bpy.props import BoolProperty
+from bpy.props import BoolProperty, StringProperty, IntProperty
 from bpy.types import AddonPreferences
 
 class Pid():
@@ -18,10 +18,35 @@ class DeveloperUtilitiesPreferences(AddonPreferences):
             name="Use External Editor",
             default=False,
             )
+    
+    target_dir : StringProperty(
+            name="Target Directory",
+            subtype='DIR_PATH',
+            )
+    
+    use_server : BoolProperty(
+            name="Start HTTP Server",
+            default=False,
+            )
+    
+    server_port : IntProperty(
+            name="Server Port",
+            default=8000,
+            min = 0,
+            max = 65535,
+            )
 
     def draw(self, context):
         layout = self.layout
-        layout.prop(self, "use_external")
+        box = layout.box()
+        box.label(text="Edit Addon Options")
+        box.prop(self, "use_external")
+        box = layout.box()
+        box.label(text="Generate Documentation Options")
+        box.prop(self, "target_dir")
+        row = box.row()
+        row.prop(self, "use_server")
+        row.prop(self, "server_port")
 
 def register():
     bpy.utils.register_class(DeveloperUtilitiesPreferences)
