@@ -1,7 +1,4 @@
 import bpy
-import pdoc.render
-
-pid = -1
 
 def run(cmd):
     import subprocess, shlex
@@ -47,13 +44,13 @@ def generate(**kwargs):
 
     
 def generate_and_run(**kwargs):
-    
+    from .. import pid
+
     import sys
     path = generate(**kwargs)
 
     if kwargs['server']:
-        global pid
-        
+     
         try: 
             exe = sys.executable
             port = kwargs['port']
@@ -85,10 +82,11 @@ class KillServerOperator(bpy.types.Operator):
     pid : bpy.props.IntProperty(name="pid")
     def execute(self, context):
         import signal, os
-        global pid
+        from .. import Pid
+
         if self.pid > -1:
             os.kill(self.pid, signal.SIGTERM)
-            pid = -1
+            Pid.pid = -1
             return {"FINISHED"}
         return {"CANCELLED"}
 

@@ -8,6 +8,7 @@ from bpy.props import StringProperty
 
 
 def draw(**kwargs):
+    from .. import DeveloperUtilitiesPreferences, Pid
     
     global olddraw
     
@@ -36,16 +37,15 @@ def draw(**kwargs):
         col_c.operator("pdoc.install",text="Install missing pdoc dependency")
         return 
     
-    global pid
-    if pid == -1:
-        op = col_c.operator("pdoc.generate", text="Generate Documentation")
+    if Pid.pid == -1:
+        op = col_c.operator("pdoc.generate", text="Generate Documentation", icon="FILE_TEXT")
         op.module_name = mod.__name__
         op.server = addon_prefs.use_server
         op.port = addon_prefs.server_port
         op.target = addon_prefs.target_dir
     else:
         op = col_c.operator("pdoc.kill", text="Stop running server")
-        op.pid = pid
+        op.pid = Pid.pid
 
 
 class WM_OT_addon_edit(Operator):

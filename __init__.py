@@ -6,6 +6,8 @@ import bpy
 from bpy.props import BoolProperty
 from bpy.types import AddonPreferences
 
+class Pid():
+    pid = -1
 
 class DeveloperUtilitiesPreferences(AddonPreferences):
     # this must match the addon name, use '__package__'
