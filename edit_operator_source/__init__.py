@@ -38,7 +38,11 @@ def parent(i):
             break
         if isinstance(i, ast.ClassDef):
             break
+        if isinstance(i, ast.FunctionDef) and not i.parent is None and not isinstance(i.parent, ast.ClassDef):
+            break
+
         i = i.parent
+
     if hasattr(i, "name"):
         return i.name
     else:
@@ -67,8 +71,8 @@ def check_for_calls(a, opname, filepath):
                 if opname == f"{cls}.{nm}".replace("bpy.ops.",""):
                     p = parent(i)
                     if p is not None:
-                        print("FOUND", parent(i), filepath, i.lineno, i.col_offset)
-                        call = [opname, parent(i), filepath, i.lineno, i.col_offset]
+                        print("FOUND", p, filepath, i.lineno, i.col_offset)
+                        call = [opname, p, filepath, i.lineno, i.col_offset]
                         calls.append(call)
                 
                 if i.func.attr == "operator":
@@ -93,22 +97,21 @@ def find_calls(module, method_name):
     import ast
     calls = []
     #submodules = walk_module(module,exclude=["sys"],visited=None)
-    submodules = list_submodules(module)
-    #print(submodules)
     try: 
         tree = ast.parse(inspect.getsource(module))
         filepath = inspect.getfile(module)
         calls.extend(check_for_calls(tree, method_name, filepath))
     except Exception as e:
-        pass
+        print(e)
 
-    for submod in submodules:
-        try: 
+    try: 
+        submodules = list_submodules(module)
+        for submod in submodules:
             tree = ast.parse(inspect.getsource(submod))
             filepath = inspect.getfile(submod)
             calls.extend(check_for_calls(tree, method_name, filepath))
-        except Exception as e:
-            print(e)
+    except Exception as e:
+        print(e)
 
     return calls
 
@@ -177,23 +180,29 @@ def getmodule(opname):
 
 
 def get_ops():
-    allops = []
-    opsdir = dir(bpy.ops)
-    for opmodname in opsdir:
-        opmod = getattr(bpy.ops, opmodname)
-        opmoddir = dir(opmod)
-        for o in opmoddir:
-            name = opmodname + "." + o
-            clazz = getclazz(name)
-            #if (clazz is not None) :# and clazz.__module__ != 'bpy.types'):
-            allops.append(name)
-        del opmoddir
+    import inspect
+    op_strings = []
+    tot = 0
+    for op_module_name in dir(bpy.ops):
+        op_module = getattr(bpy.ops, op_module_name)
+        for op_submodule_name in dir(op_module):
+            op = getattr(op_module, op_submodule_name)
+            text = repr(op)
+            if text.split("\n")[-1].startswith("bpy.ops."):
+                text = text.replace("bpy.ops.", "").split("(")[0]
+                op_strings.append(text)
+                tot += 1
 
     # add own operator name too, since its not loaded yet when this is called
-    allops.append("text.edit_operator")
-    l = sorted(allops)
-    del allops
-    del opsdir
+    
+    # seems our own module's operators are not being loaded / added into  bpy.ops, who knows why...
+    # ...so add manually... 
+    op_strings.append("text.edit_operator")
+    op_strings.append("text.python_api_lookup")
+    op_strings.append("wm.addon_edit_sources")
+    #   
+    l = sorted(op_strings)
+    del op_strings
 
     return [(y, y, "", x) for x, y in enumerate(l)]
 
@@ -277,7 +286,7 @@ class TEXT_OT_EditOperator(Operator):
             bpy.ops.text.jump(line=line)
 
     def show_calls(self, context):
-        import bl_ui, bl_ext
+        import bl_ui, bl_ext, bl_pkg
         import os
         
         exclude = []
