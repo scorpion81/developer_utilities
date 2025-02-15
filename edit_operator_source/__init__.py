@@ -200,6 +200,9 @@ def get_ops():
     op_strings.append("text.edit_operator")
     op_strings.append("text.python_api_lookup")
     op_strings.append("wm.addon_edit_sources")
+    op_strings.append("pdoc.generate")
+    op_strings.append("pdoc.kill")
+    op_strings.append("pdoc.install")
     #   
     l = sorted(op_strings)
     del op_strings
