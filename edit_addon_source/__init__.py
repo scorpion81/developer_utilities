@@ -29,7 +29,7 @@ def draw(**kwargs):
     col_a.label(text="Development")
     col_b.operator("wm.addon_edit_sources", text="Edit Addon Sources", icon='TEXT').module = mod.__name__
 
-    addon_prefs = bpy.context.preferences.addons[EditAddonSourcePreferences.bl_idname].preferences
+    addon_prefs = bpy.context.preferences.addons[DeveloperUtilitiesPreferences.bl_idname].preferences
 
     try:
         import pdoc
