@@ -32,7 +32,15 @@ def draw(**kwargs):
     addon_prefs = bpy.context.preferences.addons[DeveloperUtilitiesPreferences.bl_idname].preferences
 
     try:
+        import sys, site
+        pth = site.getusersitepackages()
+        print(pth)
+        sys.path.insert(pth, 0)
+        
         import pdoc
+    
+        sys.path.remove(pth)
+
     except ImportError as e:
         col_c.operator("pdoc.install",text="Install missing pdoc dependency")
         return 
