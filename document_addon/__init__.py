@@ -1,5 +1,26 @@
 import bpy
 
+
+def ensure_module(name: str, package: str = None):
+    import sys
+    import subprocess
+    import importlib
+    import site
+
+    try:
+        return importlib.import_module(name)
+    except ImportError:
+        print(f"[INFO] Module '{name}' not found. Trying to install…")
+        subprocess.check_call([
+            sys.executable, "-m", "pip", "install", package or name
+        ])
+        # Pfade und Caches aktualisieren
+        site.main()  # aktualisiert sys.path bei venvs
+        importlib.invalidate_caches()
+        #if name in sys.modules:
+        #    del sys.modules[name]
+        #return importlib.import_module(name)
+
 def run(cmd):
     import subprocess
     subprocess.run(cmd, check=True)
@@ -71,14 +92,7 @@ class PdocInstallOperator(bpy.types.Operator):
     bl_idname = "pdoc.install"
     bl_label = "Install pdoc"
     def execute(self, context):
-        import sys
-        from pathlib import Path
-        exe = str(Path(sys.executable))
-        #cmd = [exe, '-m', 'ensurepip', '--upgrade', 'pip']
-        #run(cmd)
-        cmd = [exe, '-m', 'pip', 'install', 'pdoc']
-        run(cmd)
-        return {"FINISHED"}
+        ensure_module("pdoc")
         
 class KillServerOperator(bpy.types.Operator):
     """Kill the server process if one was started previously"""
