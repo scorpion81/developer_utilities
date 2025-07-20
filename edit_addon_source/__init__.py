@@ -9,6 +9,8 @@ from bpy.props import StringProperty
 
 def draw(**kwargs):
     from .. import DeveloperUtilitiesPreferences, Pid
+    import site, sys
+    pth = site.getusersitepackages()
     
     global olddraw
     
@@ -32,16 +34,13 @@ def draw(**kwargs):
     addon_prefs = bpy.context.preferences.addons[DeveloperUtilitiesPreferences.bl_idname].preferences
 
     try:
-        import sys, site
-        pth = site.getusersitepackages()
-        print(pth)
-        sys.path.insert(pth, 0)
-        
+        sys.path.insert(0, pth)
         import pdoc
-    
         sys.path.remove(pth)
 
     except ImportError as e:
+        sys.path.remove(pth)
+
         col_c.operator("pdoc.install",text="Install missing pdoc dependency")
         return 
     
