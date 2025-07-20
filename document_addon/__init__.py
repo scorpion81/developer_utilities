@@ -56,7 +56,7 @@ def generate_and_run(**kwargs):
         try: 
             exe = str(Path(sys.executable))
             port = kwargs['port']
-            cmd = [exe, '-m', 'http.server', '-d', path, port]
+            cmd = [exe, '-m', 'http.server', '-d', path, str(port)]
             Pid.pid = start(cmd).pid
         except OSError as e:
             print(e)

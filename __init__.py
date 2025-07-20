@@ -16,21 +16,25 @@ class DeveloperUtilitiesPreferences(AddonPreferences):
 
     use_external : BoolProperty(
             name="Use External Editor",
+            description="Uses the path to an external editor, set in blenders preferences",
             default=False,
             )
     
     target_dir : StringProperty(
             name="Target Directory",
+            description="Generate documentation here instead in the docs subfolder inside the addon",
             subtype='DIR_PATH',
             )
     
     use_server : BoolProperty(
             name="Start HTTP Server",
+            description="Start a python -m http.server (local webserver) in the documentation directory and point a browser there",
             default=False,
             )
     
     server_port : IntProperty(
             name="Server Port",
+            description="Port to be used if the server is started, change it here if ports are blocked"
             default=8000,
             min = 0,
             max = 65535,
