@@ -6,7 +6,6 @@ import bpy
 from bpy.types import Operator
 from bpy.props import StringProperty
 
-global olddraw
 
 def draw(**kwargs):
     from .. import DeveloperUtilitiesPreferences, Pid
@@ -14,8 +13,6 @@ def draw(**kwargs):
     pth = site.getusersitepackages()
     
     global olddraw
-    if olddraw is None:
-        return
     
     olddraw(**kwargs)
 
@@ -141,22 +138,17 @@ def register():
     bpy.utils.register_class(WM_OT_addon_edit)
     import bl_pkg.bl_extension_ui as ui
     
-    #re-assign method (if not already)
-    global olddraw
-
-    if olddraw != ui.addon_draw_item_expanded:
-        olddraw = ui.addon_draw_item_expanded
-        ui.addon_draw_item_expanded = draw
-
+    #re-assign method
+    global olddraw 
+    olddraw = ui.addon_draw_item_expanded
+    ui.addon_draw_item_expanded = draw
    
     
 def unregister():
     global olddraw
     
     #restore method
-    import bl_pkg.bl_extension_ui
-    if olddraw is not None: 
-        bl_pkg.bl_extension_ui.addon_draw_item_expanded = olddraw
-        olddraw = None
+    import bl_pkg.bl_extension_ui 
+    bl_pkg.bl_extension_ui.addon_draw_item_expanded = olddraw
 
     bpy.utils.unregister_class(WM_OT_addon_edit)
