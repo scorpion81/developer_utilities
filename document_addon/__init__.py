@@ -1,12 +1,12 @@
 import bpy
 
 def run(cmd):
-    import subprocess, shlex
-    subprocess.run(shlex.split(cmd), check=True)
+    import subprocess
+    subprocess.run(cmd, check=True)
 
 def start(cmd):
-    import subprocess, shlex
-    return subprocess.Popen(shlex.split(cmd))
+    import subprocess
+    return subprocess.Popen(cmd)
 
 def list_submodules(package):
     
@@ -47,15 +47,16 @@ def generate_and_run(**kwargs):
 
     import sys
     from .. import Pid
+    from pathlib import Path
     
-    path = generate(**kwargs)
+    path = str(generate(**kwargs)) #this is already a path
 
     if kwargs['server']:
      
         try: 
-            exe = sys.executable
+            exe = str(Path(sys.executable))
             port = kwargs['port']
-            cmd = f"{exe} -m http.server -d{path} {port}"
+            cmd = [exe, '-m', 'http.server', '-d', path, port]
             Pid.pid = start(cmd).pid
         except OSError as e:
             print(e)
@@ -71,8 +72,11 @@ class PdocInstallOperator(bpy.types.Operator):
     bl_label = "Install pdoc"
     def execute(self, context):
         import sys
-        exe = sys.executable
-        cmd = f"{exe} -m pip install pdoc"
+        from pathlib import Path
+        exe = str(Path(sys.executable))
+        #cmd = [exe, '-m', 'ensurepip', '--upgrade', 'pip']
+        #run(cmd)
+        cmd = [exe, '-m', 'pip', 'install', 'pdoc']
         run(cmd)
         return {"FINISHED"}
         
