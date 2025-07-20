@@ -93,6 +93,7 @@ class PdocInstallOperator(bpy.types.Operator):
     bl_label = "Install pdoc"
     def execute(self, context):
         ensure_module("pdoc")
+        return {'FINISHED'}
         
 class KillServerOperator(bpy.types.Operator):
     """Kill the server process if one was started previously"""
