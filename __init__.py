@@ -34,7 +34,7 @@ class DeveloperUtilitiesPreferences(AddonPreferences):
     
     server_port : IntProperty(
             name="Server Port",
-            description="Port to be used if the server is started, change it here if ports are blocked"
+            description="Port to be used if the server is started, change it here if ports are blocked",
             default=8000,
             min = 0,
             max = 65535,
